@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sucre Hub Command - Scanner Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        /* Highlights the active field for the scanner */
+        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.5); }
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; background: #eee; padding: 15px; border-radius: 8px; margin: 20px 0; align-items: end; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: #2c3e50; color: white; }
+        .btn-primary { background: #007bff; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 18px; margin-top: 10px; }
+        .btn-pdf { background: #dc3545; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; }
+        .status-pill { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📦 Sucre Logistics Hub</h2>
+    
+    <div class="form-group">
+        <input type="text" id="trackingInput" placeholder="Scan Barcode Now..." autofocus>
+        <input type="text" id="phoneInput" placeholder="Customer Phone (+1...)">
+        <select id="agentSelect">
+            <option>Agent Alpha</option>
+            <option>Agent Bravo</option>
+        </select>
+        <textarea id="contentsInput" placeholder="Package Contents..."></textarea>
+        <button class="btn-primary" id="logBtn" onclick="logAndNotify()">Log & Notify</button>
+    </div>
+
+    <div class="controls">
+        <div>
+            <label style="font-size:11px;">Filter Day</label>
+            <input type="date" id="dateToggle" onchange="fetchLogsByDate()">
+        </div>
+        <div>
+            <label style="font-size:11px;">Global Tracking Search</label>
+            <input type="text" id="searchInput" placeholder="Type ID and hit Enter..." onkeypress="if(event.key==='Enter') searchLogs()">
+        </div>
+        <button class="btn-pdf" onclick="downloadPDF()">Export PDF</button>
+    </div>
+
+    <table id="logsTable">
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Tracking ID</th>
+                <th>Contents</th>
+                <th>Agent</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const APP_URL = "https://script.google.com/macros/s/AKfycbwrntvyPg_BF9h-od-yYHIqHqVv1kzwwEeBDFe3uafVj9uVdL6Y63VZB_wnLJw3rs4l/exec"
+    
+    // Audio feedback for successful scan
+    const successSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+
+    // AUTO-SUBMIT ON SCAN: If the scanner sends an 'Enter' key in the tracking field
+    document.getElementById('trackingInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Prevents page reload
+            logAndNotify();
+        }
+    });
+
+    async function logAndNotify() {
+        const trk = document.getElementById('trackingInput');
+        const phone = document.getElementById('phoneInput');
+        const agent = document.getElementById('agentSelect');
+        const cont = document.getElementById('contentsInput');
+
+        if(!trk.value) return;
+
+        const payload = {
+            trackingId: trk.value,
+            phone: phone.value,
+            agent: agent.value,
+            contents: cont.value
+        };
+
+        // UI Feedback: Disable button during save
+        const btn = document.getElementById('logBtn');
+        btn.innerText = "Saving...";
+        btn.disabled = true;
+
+        try {
+            await fetch(APP_URL, { method: "POST", body: JSON.stringify(payload) });
+            
+            // Success Actions
+            successSound.play();
+            
+            // Clear inputs and refocus for next scan
+            trk.value = "";
+            phone.value = "";
+            cont.value = "";
+            trk.focus(); // VERY IMPORTANT: Puts the cursor back for the next scan
+            
+            fetchLogsByDate(); // Refresh the table
+        } catch (e) {
+            alert("Error saving. Check internet connection.");
+        } finally {
+            btn.innerText = "Log & Notify";
+            btn.disabled = false;
+        }
+    }
+
+    async function fetchLogsByDate() {
+        const date = document.getElementById('dateToggle').value;
+        const response = await fetch(`${APP_URL}?date=${date}`);
+        const data = await response.json();
+        updateTable(data);
+    }
+
+    async function searchLogs() {
+        const query = document.getElementById('searchInput').value;
+        const response = await fetch(`${APP_URL}?search=${query}`);
+        const data = await response.json();
+        updateTable(data);
+        document.getElementById('dateToggle').value = ""; 
+    }
+
+    function updateTable(data) {
+        const tbody = document.querySelector("#logsTable tbody");
+        tbody.innerHTML = data.reverse().map(row => `
+            <tr>
+                <td><span class="status-pill">LOGGED</span></td>
+                <td>${row[1]}</td>
+                <td>${row[4]}</td>
+                <td>${row[3]}</td>
+            </tr>
+        `).join('');
+    }
+
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const date = document.getElementById('dateToggle').value || "Search_Result";
+        doc.text(`Sucre Logistics Daily Report: ${date}`, 14, 15);
+        doc.autoTable({ html: '#logsTable', startY: 25, theme: 'grid' });
+        doc.save(`Sucre_Report_${date}.pdf`);
+    }
+
+    document.getElementById('dateToggle').valueAsDate = new Date();
+    fetchLogsByDate();
+</script>
+
+</body>
+</html>
