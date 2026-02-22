@@ -78,10 +78,8 @@
             const phone = document.getElementById('phoneInput');
             const agent = document.getElementById('agentSelect');
             const cont = document.getElementById('contentsInput');
-            const btn = document.getElementById('logBtn');
-
+            const APP_URL = "https://script.google.com/macros/s/AKfycbyk8Hz4VkrvI_4qxKYvHgi8bO4ZbZ4VNSqTMIYsDwsr_0jjSJ6dRFAbO4iD9Ah_4d78kQ/exec";
             if(!trk.value) return;
-
             const params = new URLSearchParams();
             params.append('trackingId', trk.value);
             params.append('phone', phone.value);
@@ -166,4 +164,5 @@
     </script>
 </body>
 </html>
+
 
