@@ -60,12 +60,12 @@
     </div>
 
     <script>
-        // REPLACE THIS URL with your "New Deployment" URL from Google Apps Script
-        const APP_URL = "https://script.google.com/macros/s/AKfycbwrntvyPg_BF9h-od-yYHIqHqVv1kzwwEeBDFe3uafVj9uVdL6Y63VZB_wnLJw3rs4l/exec";
+        // Use your LATEST "Anyone" deployment URL here
+        const APP_URL = "https://script.google.com/macros/s/AKfycbyk8Hz4VkrvI_4qxKYvHgi8bO4ZbZ4VNSqTMIYsDwsr_0jjSJ6dRFAbO4iD9Ah_4d78kQ/exec"
         
         const successSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
 
-        // Handle scanner "Enter" key
+        // Allow scanner to trigger submit on 'Enter'
         document.getElementById('trackingInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -80,12 +80,8 @@
             const cont = document.getElementById('contentsInput');
             const btn = document.getElementById('logBtn');
 
-            if(!trk.value) {
-                alert("Please scan or enter a Tracking ID");
-                return;
-            }
+            if(!trk.value) return;
 
-            // Prepare data as URL parameters to avoid CORS JSON issues
             const params = new URLSearchParams();
             params.append('trackingId', trk.value);
             params.append('phone', phone.value);
@@ -96,7 +92,7 @@
             btn.disabled = true;
 
             try {
-                // Use no-cors mode for Google Scripts
+                // The CORS Fix: mode 'no-cors'
                 await fetch(APP_URL, {
                     method: "POST",
                     mode: "no-cors",
@@ -104,19 +100,18 @@
                     body: params.toString()
                 });
 
-                // Since no-cors doesn't return a readable response, we trigger success here
                 successSound.play();
                 trk.value = "";
                 phone.value = "";
                 cont.value = "";
                 trk.focus();
                 
-                // Give the sheet a second to process before refreshing table
+                // Refresh table after a short delay
                 setTimeout(fetchLogsByDate, 1500);
 
             } catch (e) {
-                console.error("Submission Error:", e);
-                alert("Error saving. Check your internet or Google Script deployment.");
+                console.error(e);
+                alert("Submission failed. Check your internet.");
             } finally {
                 btn.innerText = "Log & Notify";
                 btn.disabled = false;
@@ -129,23 +124,22 @@
                 const response = await fetch(`${APP_URL}?date=${date}`);
                 const data = await response.json();
                 updateTable(data);
-            } catch (e) {
-                console.log("Empty or no logs for this date.");
-            }
+            } catch (e) { console.log("Fetch failed or no logs yet."); }
         }
 
         async function searchLogs() {
             const query = document.getElementById('searchInput').value;
-            const response = await fetch(`${APP_URL}?search=${query}`);
-            const data = await response.json();
-            updateTable(data);
-            document.getElementById('dateToggle').value = "";
+            try {
+                const response = await fetch(`${APP_URL}?search=${query}`);
+                const data = await response.json();
+                updateTable(data);
+            } catch (e) { alert("Search failed."); }
         }
 
         function updateTable(data) {
             const tbody = document.querySelector("#logsTable tbody");
             if (!data || data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4'>No logs found</td></tr>";
+                tbody.innerHTML = "<tr><td colspan='4'>No data found</td></tr>";
                 return;
             }
             tbody.innerHTML = data.reverse().map(row => `
@@ -161,13 +155,12 @@
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            const date = document.getElementById('dateToggle').value || "Report";
-            doc.text(`Sucre Logistics Daily Report: ${date}`, 14, 15);
-            doc.autoTable({ html: '#logsTable', startY: 25, theme: 'grid' });
-            doc.save(`Sucre_Report_${date}.pdf`);
+            doc.text("Sucre Logistics Hub Report", 14, 15);
+            doc.autoTable({ html: '#logsTable', startY: 25 });
+            doc.save("Sucre_Log.pdf");
         }
 
-        // Initialize table
+        // Auto-load today's logs on startup
         document.getElementById('dateToggle').valueAsDate = new Date();
         fetchLogsByDate();
     </script>
