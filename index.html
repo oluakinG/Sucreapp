@@ -1,62 +1,16 @@
+<!-- Improved Sucre Logistics Hub code -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Accessible Webpage</title>
-    <link rel="stylesheet" href="styles.css">
-    <script defer src="script.js"></script>
+    <title>Sucre Logistics Hub</title>
 </head>
 <body>
-    <header>
-        <h1>Welcome to Our Accessible Webpage</h1>
-    </header>
-    <main>
-        <section>
-            <h2>Form Example</h2>
-            <form id="example-form" novalidate>
-                <label for="name">Name:</label>
-                <input type="text" id="name" name="name" required aria-required="true">
-                <span class="error-message" id="name-error"></span>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" required aria-required="true">
-                <span class="error-message" id="email-error"></span>
-                <button type="submit">Submit</button>
-            </form>
-        </section>
-    </main>
+    <h1>Welcome to the Sucre Logistics Hub</h1>
+    <p>Your one-stop solution for all logistics needs.</p>
     <footer>
-        <p>&copy; 2026 - All rights reserved.</p>
+        <p>Contact us at: support@sucrelogistics.com</p>
     </footer>
-    <script>
-        document.getElementById('example-form').addEventListener('submit', function (event) {
-            event.preventDefault();
-            let valid = true;
-
-            const name = document.getElementById('name');
-            const email = document.getElementById('email');
-            const nameError = document.getElementById('name-error');
-            const emailError = document.getElementById('email-error');
-
-            nameError.textContent = '';
-            emailError.textContent = '';
-
-            if (!name.value) {
-                nameError.textContent = 'Name is required.';
-                valid = false;
-            }
-            if (!email.value) {
-                emailError.textContent = 'Email is required.';
-                valid = false;
-            }
-
-            if (valid) {
-                // Send form data to the server
-            } else {
-                // Handle invalid form
-            }
-        });
-    </script>
 </body>
 </html>
