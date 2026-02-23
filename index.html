@@ -1,16 +1,514 @@
-<!-- Improved Sucre Logistics Hub code -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sucre Logistics Hub</title>
+    <meta name="description" content="Sucre Logistics Hub - A barcode scanning application for package tracking and notification">
+    <title>Sucre Hub Command - Scanner Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f4f7f6 0%, #e8f1f0 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 14px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 123, 255, 0.3);
+        }
+
+        input:invalid:not(:placeholder-shown),
+        textarea:invalid:not(:placeholder-shown) {
+            border-color: #dc3545;
+            box-shadow: 0 0 8px rgba(220, 53, 69, 0.3);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            gap: 15px;
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            align-items: end;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            overflow-x: auto;
+        }
+
+        th,
+        td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:hover {
+            background: #f9f9f9;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #0056b3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .btn-pdf {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn-pdf:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.4);
+        }
+
+        .btn-pdf:active {
+            transform: translateY(0);
+        }
+
+        .status-pill {
+            background: #d4edda;
+            color: #155724;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-pill.pending {
+            background: #fff3cd;
+            color: #856404;
+            border-color: #ffeaa7;
+        }
+
+        .status-pill.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #f5c6cb;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+            border-left: 4px solid;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border-color: #28a745;
+            display: block;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-color: #dc3545;
+            display: block;
+        }
+
+        .alert.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-color: #17a2b8;
+            display: block;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .controls {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+
+            .control-group {
+                width: 100%;
+            }
+
+            input,
+            select,
+            textarea {
+                padding: 10px;
+                font-size: 16px;
+            }
+
+            th,
+            td {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            .btn-primary,
+            .btn-pdf,
+            .btn-secondary {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            th,
+            td {
+                padding: 8px;
+                font-size: 12px;
+            }
+
+            .status-pill {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-    <h1>Welcome to the Sucre Logistics Hub</h1>
-    <p>Your one-stop solution for all logistics needs.</p>
-    <footer>
-        <p>Contact us at: support@sucrelogistics.com</p>
-    </footer>
-</body>
-</html>
+    <div class="container">
+        <h1>📦 Sucre Logistics Hub</h1>
+
+        <div id="alertContainer"></div>
+
+        <div class="form-group">
+            <label for="trackingInput">Tracking ID / Barcode *</label>
+            <input type="text" id="trackingInput" placeholder="Scan barcode or enter tracking ID..." autofocus required>
+        </div>
+
+        <div class="form-group">
+            <label for="phoneInput">Customer Phone Number</label>
+            <input type="tel" id="phoneInput" placeholder="Customer phone (+1...)" pattern="[0-9\-\+\(\)\s]*">
+        </div>
+
+        <div class="form-group">
+            <label for="agentSelect">Assigned Agent *</label>
+            <select id="agentSelect" required>
+                <option value="">-- Select Agent --</option>
+                <option value="Agent Alpha">Agent Alpha</option>
+                <option value="Agent Bravo">Agent Bravo</option>
+                <option value="Agent Charlie">Agent Charlie</option>
+                <option value="Agent Delta">Agent Delta</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="contentsInput">Package Contents</label>
+            <textarea id="contentsInput" placeholder="Describe package contents..."></textarea>
+        </div>
+
+        <button class="btn-primary" id="logBtn" onclick="handleLogSubmit()">
+            <span class="loading-spinner" id="spinner"></span>
+            Log & Notify
+        </button>
+
+        <div class="button-group">
+            <button class="btn-secondary" onclick="clearForm()">Clear All</button>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="dateToggle">Filter by Date</label>
+                <input type="date" id="dateToggle" onchange="fetchLogsByDate()">
+            </div>
+            <div class="control-group">
+                <label for="searchInput">Global Tracking Search</label>
+                <input type="text" id="searchInput" placeholder="Type tracking ID and hit Enter..." onkeypress="if(event.key==='Enter') searchLogs()">
+            </div>
+            <button class="btn-pdf" onclick="downloadPDF()">📄 Export PDF</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table id="logsTable">
+                <thead>
+                    <tr>
+                        <th>Status</th>
+                        <th>Tracking ID</th>
+                        <th>Contents</th>
+                        <th>Agent</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            APP_URL: "https://script.google.com/macros/s/AKfycbyk8Hz4VkrvI_4qxKYvHgi8bO4ZbZ4VNSqTMIYsDwsr_0jjSJ6dRFAbO4iD9Ah_4d78kQ/exec",
+            SUCCESS_SOUND_URL: 'https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'
+        };
+
+        // Initialize
+        let successSound = null;
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Initialize sound with error handling
+            try {
+                successSound = new Audio(CONFIG.SUCCESS_SOUND_URL);
+            } catch (e) {
+                console.warn('Sound initialization failed:', e);
+            }
+
+            // Set up event listeners
+            document.getElementById('trackingInput').addEventListener('keypress', handleEnterKey);
+            
+            // Set today's date
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dateToggle').value = today;
+            
+            // Load today's logs
+            fetchLogsByDate();
+        }
+
+        function handleEnterKey(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLogSubmit();
+            }
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.textContent = message;
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.style.display = 'none';
+            }, 5000);
+        }
+
+        function clearForm() {
+            document.getElementById('trackingInput').value = '';
+            document.getElementById('phoneInput').value = '';
+            document.getElementById('contentsInput').value = '';
+            document.getElementById('agentSelect').value = '';
+            document.getElementById('trackingInput').focus();
+        }
+
+        function validateForm() {
+            const trackingId = document.getElementById('trackingInput').value.trim();
+            const agent = document.getElementById('agentSelect').value.trim();
+            
+            if (!trackingId) {
+                showAlert('Tracking ID is required', 'error');
+                return false;
+            }
+            
+            if (!agent) {
+                showAlert('Please select an agent', 'error');
+                return false;
+            }
+
+            const phone = document.getElementById('phoneInput').value.trim();
+            if (phone && !/^[0-9\-\+\(\)\s]*$/.test(phone)) {
+                showAlert('Please enter a valid phone number', 'error');
+                return false;
+            }
+            
+            return true;
+        }
+
+        async function handleLogSubmit() {
+            if (!validateForm()) {
+                return;
+            }
+
+            const logBtn = document.getElementById('logBtn');
+            const spinner = document.getElementById
+
