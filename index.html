@@ -2,167 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Sucre Hub Command - Scanner Edition</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 15px; }
-        input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
-        input:focus { border-color: #007bff; outline: none; box-shadow: 0 0 5px rgba(0,123,255,0.5); }
-        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; background: #eee; padding: 15px; border-radius: 8px; margin: 20px 0; align-items: end; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: #2c3e50; color: white; }
-        .btn-primary { background: #007bff; color: white; border: none; padding: 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; font-size: 18px; margin-top: 10px; }
-        .btn-pdf { background: #dc3545; color: white; border: none; padding: 10px; border-radius: 6px; cursor: pointer; width: 100%; }
-        .status-pill { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Accessible Webpage</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h2>📦 Sucre Logistics Hub</h2>
-        <div class="form-group">
-            <input type="text" id="trackingInput" placeholder="Scan Barcode Now..." autofocus>
-            <input type="text" id="phoneInput" placeholder="Customer Phone (+1...)">
-            <select id="agentSelect">
-                <option>Agent Alpha</option>
-                <option>Agent Bravo</option>
-            </select>
-            <textarea id="contentsInput" placeholder="Package Contents..."></textarea>
-            <button class="btn-primary" id="logBtn" onclick="logAndNotify()">Log & Notify</button>
-        </div>
-
-        <div class="controls">
-            <div>
-                <label style="font-size:11px;">Filter Day</label>
-                <input type="date" id="dateToggle" onchange="fetchLogsByDate()">
-            </div>
-            <div>
-                <label style="font-size:11px;">Global Tracking Search</label>
-                <input type="text" id="searchInput" placeholder="Type ID and hit Enter..." onkeypress="if(event.key==='Enter') searchLogs()">
-            </div>
-            <button class="btn-pdf" onclick="downloadPDF()">Export PDF</button>
-        </div>
-
-        <table id="logsTable">
-            <thead>
-                <tr>
-                    <th>Status</th>
-                    <th>Tracking ID</th>
-                    <th>Contents</th>
-                    <th>Agent</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
+    <header>
+        <h1>Welcome to Our Accessible Webpage</h1>
+    </header>
+    <main>
+        <section>
+            <h2>Form Example</h2>
+            <form id="example-form" novalidate>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required aria-required="true">
+                <span class="error-message" id="name-error"></span>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required aria-required="true">
+                <span class="error-message" id="email-error"></span>
+                <button type="submit">Submit</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2026 - All rights reserved.</p>
+    </footer>
     <script>
-        // Use your LATEST "Anyone" deployment URL here
-        const APP_URL = "https://script.google.com/macros/s/AKfycbyk8Hz4VkrvI_4qxKYvHgi8bO4ZbZ4VNSqTMIYsDwsr_0jjSJ6dRFAbO4iD9Ah_4d78kQ/exec"
-        
-        const successSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3');
+        document.getElementById('example-form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            let valid = true;
 
-        // Allow scanner to trigger submit on 'Enter'
-        document.getElementById('trackingInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                logAndNotify();
+            const name = document.getElementById('name');
+            const email = document.getElementById('email');
+            const nameError = document.getElementById('name-error');
+            const emailError = document.getElementById('email-error');
+
+            nameError.textContent = '';
+            emailError.textContent = '';
+
+            if (!name.value) {
+                nameError.textContent = 'Name is required.';
+                valid = false;
+            }
+            if (!email.value) {
+                emailError.textContent = 'Email is required.';
+                valid = false;
+            }
+
+            if (valid) {
+                // Send form data to the server
+            } else {
+                // Handle invalid form
             }
         });
-
-        async function logAndNotify() {
-            const trk = document.getElementById('trackingInput');
-            const phone = document.getElementById('phoneInput');
-            const agent = document.getElementById('agentSelect');
-            const cont = document.getElementById('contentsInput');
-            const APP_URL = "https://script.google.com/macros/s/AKfycbyk8Hz4VkrvI_4qxKYvHgi8bO4ZbZ4VNSqTMIYsDwsr_0jjSJ6dRFAbO4iD9Ah_4d78kQ/exec";
-            if(!trk.value) return;
-            const params = new URLSearchParams();
-            params.append('trackingId', trk.value);
-            params.append('phone', phone.value);
-            params.append('agent', agent.value);
-            params.append('contents', cont.value);
-
-            btn.innerText = "Saving...";
-            btn.disabled = true;
-
-            try {
-                // The CORS Fix: mode 'no-cors'
-                await fetch(APP_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                    body: params.toString()
-                });
-
-                successSound.play();
-                trk.value = "";
-                phone.value = "";
-                cont.value = "";
-                trk.focus();
-                
-                // Refresh table after a short delay
-                setTimeout(fetchLogsByDate, 1500);
-
-            } catch (e) {
-                console.error(e);
-                alert("Submission failed. Check your internet.");
-            } finally {
-                btn.innerText = "Log & Notify";
-                btn.disabled = false;
-            }
-        }
-
-        async function fetchLogsByDate() {
-            const date = document.getElementById('dateToggle').value;
-            try {
-                const response = await fetch(`${APP_URL}?date=${date}`);
-                const data = await response.json();
-                updateTable(data);
-            } catch (e) { console.log("Fetch failed or no logs yet."); }
-        }
-
-        async function searchLogs() {
-            const query = document.getElementById('searchInput').value;
-            try {
-                const response = await fetch(`${APP_URL}?search=${query}`);
-                const data = await response.json();
-                updateTable(data);
-            } catch (e) { alert("Search failed."); }
-        }
-
-        function updateTable(data) {
-            const tbody = document.querySelector("#logsTable tbody");
-            if (!data || data.length === 0) {
-                tbody.innerHTML = "<tr><td colspan='4'>No data found</td></tr>";
-                return;
-            }
-            tbody.innerHTML = data.reverse().map(row => `
-                <tr>
-                    <td><span class="status-pill">LOGGED</span></td>
-                    <td>${row[1] || ''}</td>
-                    <td>${row[4] || ''}</td>
-                    <td>${row[3] || ''}</td>
-                </tr>
-            `).join('');
-        }
-
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Sucre Logistics Hub Report", 14, 15);
-            doc.autoTable({ html: '#logsTable', startY: 25 });
-            doc.save("Sucre_Log.pdf");
-        }
-
-        // Auto-load today's logs on startup
-        document.getElementById('dateToggle').valueAsDate = new Date();
-        fetchLogsByDate();
     </script>
 </body>
 </html>
-
-
